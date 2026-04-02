@@ -1,0 +1,3 @@
+_target_: adapters_real.elevenlabs_speaker.ElevenLabsSpeaker
+wpm: 150
+voice_id: "aEO01A4wXwd1O8GPgGlF" # Voice: Arabella

@@ -1,0 +1,40 @@
+{
+  "name": "voice-mcp-server",
+  "version": "0.1.0",
+  "description": "An MCP server to allow LLMs to speak and listen via bidirectional voice loops",
+  "main": "build/index.js",
+  "type": "module",
+  "bin": {
+    "voice-mcp-server": "./build/index.js"
+  },
+  "files": [
+    "build",
+    "src",
+    "config",
+    "requirements.txt",
+    "tsconfig.json"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x build/index.js",
+    "start": "node build/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "voice",
+    "llm",
+    "audio",
+    "tts",
+    "stt",
+    "vad"
+  ],
+  "author": "Erick Vazquez Santillan",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

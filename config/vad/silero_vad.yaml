@@ -1,0 +1,7 @@
+_target_: adapters_real.silero_vad.RealSileroVAD
+
+# Silero specific tuning (tuned for loud TV background noise)
+vad_probability_threshold: 0.95
+vad_bargein_threshold_ms: 1000
+endpointing_patience_normal_ms: 1500
+endpointing_patience_interrupted_ms: 700

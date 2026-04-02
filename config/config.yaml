@@ -1,0 +1,25 @@
+# --- Global Adapter Configuration ---
+# Use these defaults to instantly swap out hardware and AI models.
+# The configurations for each adapter are loaded dynamically from their respective folders.
+defaults:
+  # Available microphones: live_mic (PyAudio real hardware)
+  - microphone: live_mic
+  
+  # Available speakers: kokoro_speaker (local TTS), elevenlabs_speaker (cloud TTS), live_speaker (macOS 'say')
+  - speaker: kokoro_speaker
+  
+  # Available VADs: 
+  #   - ptt_vad: Walkie-Talkie mode (Hold 'Shift' to talk. Instant response. Ignores TV/noise).
+  #   - silero_vad: Conversational AI mode (Listens automatically. Tuned for 1-second barge-ins).
+  - vad: ptt_vad
+  
+  # Available STTs: mlx_whisper_large_v3 (Apple Silicon GPU), whisper_stt (Google Cloud API)
+  - stt: mlx_whisper_large_v3
+  
+  - _self_
+
+# --- Global Engine Configuration ---
+# Note: VAD-specific tuning (like barge-in thresholds and probability) 
+# is now colocated inside the specific VAD yaml files (e.g. config/vad/ptt_vad.yaml).
+config:
+  vad_silence_grace_ms: 100

@@ -1,0 +1,14 @@
+.env
+venv/
+build/
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+src/adapters_real/silero_vad.onnx
+*.wav
+*.aiff
+*.log
+*.mp3
+*.xml

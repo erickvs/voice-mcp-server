@@ -1,0 +1,3 @@
+_target_: adapters_real.kokoro_speaker.KokoroSpeaker
+wpm: 150
+voice: "af_heart"
