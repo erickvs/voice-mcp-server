@@ -154,8 +154,8 @@ async def render_visualizer(ctx: Context):
     try:
         while True:
             spectrum = "".join(random.choice(bars) for _ in range(12))
-            await ctx.report_progress(100, 100, message=f"🎙️  {spectrum}  🎙️")
-            await asyncio.sleep(0.1)
+            await ctx.info(f"🎙️  {spectrum}  🎙️")
+            await asyncio.sleep(0.5) # Slower so we don't spam the UI logs too much
     except asyncio.CancelledError:
         pass
 
