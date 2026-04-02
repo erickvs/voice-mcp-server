@@ -121,6 +121,18 @@ Simply use `npx` and `-y` as the command in your configuration.
 > [!NOTE]  
 > **First Run Performance:** The very first time you invoke the voice tool, it will take a few minutes to initialize the Python environment and download the heavy ML weights (~4GB). **The tools will not be available until this background setup completes.** You can monitor progress in your terminal logs.
 
+### 4. Uninstalling
+
+If you wish to completely remove the server and its downloaded ML models from your system to free up space:
+
+```bash
+# 1. Uninstall the NPM package
+npm uninstall -g voice-mcp-server
+
+# 2. Delete the application support folder (contains the ~4GB ML weights)
+rm -rf ~/Library/Application\ Support/VoiceMCP
+```
+
 ---
 
 ## 🛠️ Advanced: Manual Installation (Development)
