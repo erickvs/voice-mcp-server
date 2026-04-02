@@ -22,7 +22,7 @@ const requirementsPath = join(projectRoot, "requirements.txt");
  * Strips npm/npx specific environment variables that can break Python virtual environments.
  */
 function cleanEnv(): NodeJS.ProcessEnv {
-  const env: Record<string, string | undefined> = { ...process.env, PYTHONUNBUFFERED: "1" };
+  const env: Record<string, string | undefined> = { ...process.env, PYTHONUNBUFFERED: "1", PIP_REQUIRE_VIRTUALENV: "false" };
   for (const key in env) {
     if (key.toLowerCase().startsWith("npm_")) {
       delete env[key];
