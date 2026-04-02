@@ -3,7 +3,8 @@
 import { spawn, spawnSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
 
 // Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -14,7 +15,10 @@ const projectRoot = join(__dirname, "..");
 
 // Path to the Python script
 const pythonScriptPath = join(projectRoot, "src", "mcp_server.py");
-const venvPath = join(projectRoot, "venv");
+
+// Store the virtual environment in the user's App Support directory to avoid EACCES permission errors
+const appSupportDir = join(homedir(), "Library", "Application Support", "VoiceMCP");
+const venvPath = join(appSupportDir, "venv");
 const venvPythonPath = join(venvPath, "bin", "python3");
 const requirementsPath = join(projectRoot, "requirements.txt");
 
@@ -38,8 +42,13 @@ function ensurePythonEnvironment() {
   if (!existsSync(venvPath)) {
     console.error("Voice MCP: Initializing Python virtual environment. This may take a minute...");
     
+    // Ensure Application Support directory exists
+    if (!existsSync(appSupportDir)) {
+      mkdirSync(appSupportDir, { recursive: true });
+    }
+
     // Create the virtual environment
-    const venvResult = spawnSync("python3", ["-m", "venv", "venv"], {
+    const venvResult = spawnSync("python3", ["-m", "venv", venvPath], {
       cwd: projectRoot,
       stdio: "ignore",
       env: cleanEnv()
