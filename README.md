@@ -108,15 +108,15 @@ npm install -g voice-mcp-server
 ```
 
 ### 3. Connect to your MCP Client
-You can now add the server to your favorite client using the global command:
+You can now add the server to your favorite client. Using `npx -y` ensures it works seamlessly whether you installed it globally or not:
 
 **For Gemini CLI:**
 ```bash
-gemini mcp add voice-mcp-server voice-mcp-server
+gemini mcp add voice-mcp-server npx -y voice-mcp-server
 ```
 
 **For Cursor / Claude Desktop:**
-Simply use `voice-mcp-server` as the command in your configuration.
+Simply use `npx` and `-y` as the command in your configuration.
 
 > [!NOTE]  
 > **First Run Performance:** The very first time you invoke the voice tool, it will take a few minutes to initialize the Python environment and download the heavy ML weights (~4GB). You will see progress updates in your CLI.
