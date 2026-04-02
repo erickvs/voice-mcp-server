@@ -96,9 +96,14 @@ Grants the AI meta-awareness over its own hardware and software stack. If you as
 The easiest way to get started is to install the server globally via NPM. This will automatically handle the creation of the Python virtual environment and installation of ML dependencies on its first run.
 
 ### 1. Prerequisites
+- **macOS** (Apple Silicon M1/M2/M3/M4 chip required)
 - **Node.js** (v18+)
 - **Python** (3.10+)
-- **macOS** (Apple Silicon M1/M2/M3/M4 chip required)
+
+You must also have the required system-level audio libraries installed via [Homebrew](https://brew.sh/):
+```bash
+brew install portaudio espeak-ng
+```
 
 ### 2. Global Installation
 Run the following command in your terminal:
