@@ -41,7 +41,7 @@ function ensurePythonEnvironment() {
     // Create the virtual environment
     const venvResult = spawnSync("python3", ["-m", "venv", "venv"], {
       cwd: projectRoot,
-      stdio: "inherit",
+      stdio: "ignore",
       env: cleanEnv()
     });
 
@@ -55,7 +55,7 @@ function ensurePythonEnvironment() {
     // Install requirements
     const pipResult = spawnSync(venvPythonPath, ["-m", "pip", "install", "-r", requirementsPath], {
       cwd: projectRoot,
-      stdio: "inherit",
+      stdio: "ignore",
       env: cleanEnv()
     });
 
