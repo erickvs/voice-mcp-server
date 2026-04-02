@@ -19,6 +19,19 @@ const venvPythonPath = join(venvPath, "bin", "python3");
 const requirementsPath = join(projectRoot, "requirements.txt");
 
 /**
+ * Strips npm/npx specific environment variables that can break Python virtual environments.
+ */
+function cleanEnv(): NodeJS.ProcessEnv {
+  const env: Record<string, string | undefined> = { ...process.env, PYTHONUNBUFFERED: "1" };
+  for (const key in env) {
+    if (key.toLowerCase().startsWith("npm_")) {
+      delete env[key];
+    }
+  }
+  return env as NodeJS.ProcessEnv;
+}
+
+/**
  * Ensures the Python virtual environment exists and dependencies are installed.
  */
 function ensurePythonEnvironment() {
@@ -28,7 +41,8 @@ function ensurePythonEnvironment() {
     // Create the virtual environment
     const venvResult = spawnSync("python3", ["-m", "venv", "venv"], {
       cwd: projectRoot,
-      stdio: "inherit"
+      stdio: "inherit",
+      env: cleanEnv()
     });
 
     if (venvResult.status !== 0) {
@@ -41,7 +55,8 @@ function ensurePythonEnvironment() {
     // Install requirements
     const pipResult = spawnSync(venvPythonPath, ["-m", "pip", "install", "-r", requirementsPath], {
       cwd: projectRoot,
-      stdio: "inherit"
+      stdio: "inherit",
+      env: cleanEnv()
     });
 
     if (pipResult.status !== 0) {
@@ -61,11 +76,7 @@ function startBridge() {
 
   const pythonProcess = spawn(venvPythonPath, [pythonScriptPath], {
     stdio: ["pipe", "pipe", "inherit"],
-    env: {
-      ...process.env,
-      // Ensure Python output isn't buffered
-      PYTHONUNBUFFERED: "1",
-    },
+    env: cleanEnv()
   });
 
   // Pipe our stdin into Python's stdin
