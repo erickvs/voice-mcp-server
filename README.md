@@ -91,81 +91,60 @@ Grants the AI meta-awareness over its own hardware and software stack. If you as
 
 -----
 
-## 🚀 Installation & Setup
+## 🚀 Installation & Setup (Recommended)
 
-Since this project bridges Node.js and Python, you will need to set up the Python environment with the required ML dependencies, followed by the NPM bridge.
+The easiest way to get started is to install the server globally via NPM. This will automatically handle the creation of the Python virtual environment and installation of ML dependencies on its first run.
 
 ### 1. Prerequisites
+- **Node.js** (v18+)
+- **Python** (3.10+)
+- **macOS** (Apple Silicon M1/M2/M3/M4 chip required)
 
-  * **Node.js** (v18+)
-  * **Python** (3.10+)
-  * **macOS** (M1/M2/M3/M4 chip heavily recommended)
-
-### 2. Setup the Python Environment
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/voice-mcp-server.git
-cd voice-mcp-server
-
-# Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install the heavy ML dependencies
-pip install -r requirements.txt
-
-# Download required ML models locally
-# Kokoro, Silero VAD, and MLX Whisper will automatically pull their weights on the first run.
-```
-
-### 3. Install the NPM Bridge
-
-You can run the server directly via `npx` without installing it globally, or install it globally via `npm`:
+### 2. Global Installation
+Run the following command in your terminal:
 
 ```bash
-# Install globally
 npm install -g voice-mcp-server
-
-# Or run directly via npx
-npx -y voice-mcp-server
 ```
 
------
+### 3. Connect to your MCP Client
+You can now add the server to your favorite client using the global command:
 
-## 🔌 Usage: MCP Client Configuration
-
-You can seamlessly plug Voice MCP Server into any standard MCP-compatible client.
-
-### For Gemini CLI
-
-Add the server to your global configuration:
+**For Gemini CLI:**
 ```bash
-gemini mcp add voice-mcp-server npx -y voice-mcp-server
+gemini mcp add voice-mcp-server voice-mcp-server
 ```
 
-### For Cursor
+**For Cursor / Claude Desktop:**
+Simply use `voice-mcp-server` as the command in your configuration.
 
-1.  Navigate to **Cursor Settings > Features > MCP Server**
-2.  Click **+ Add New MCP Server**
-3.  **Name:** `Voice`
-4.  **Type:** `command`
-5.  **Command:** `npx -y voice-mcp-server`
+> [!NOTE]  
+> **First Run Performance:** The very first time you invoke the voice tool, it will take a few minutes to initialize the Python environment and download the heavy ML weights (~4GB). You will see progress updates in your CLI.
 
-### For Claude Desktop
+---
 
-Add the following to your `claude_desktop_config.json` (usually located at `~/Library/Application Support/Claude/claude_desktop_config.json`):
+## 🛠️ Advanced: Manual Installation (Development)
 
-```json
-{
-  "mcpServers": {
-    "voice-mcp": {
-      "command": "npx",
-      "args": ["-y", "voice-mcp-server"]
-    }
-  }
-}
-```
+If you wish to contribute to the project or run it from source, follow these steps:
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/erickvs/voice-mcp-server.git
+   cd voice-mcp-server
+   ```
+
+2. **Setup the Environment:**
+   The Node bridge expects a `venv` folder in the root.
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. **Run via NPX:**
+   ```bash
+   npx -y .
+   ```
 
 -----
 
