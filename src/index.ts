@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
@@ -14,28 +14,52 @@ const projectRoot = join(__dirname, "..");
 
 // Path to the Python script
 const pythonScriptPath = join(projectRoot, "src", "mcp_server.py");
+const venvPath = join(projectRoot, "venv");
+const venvPythonPath = join(venvPath, "bin", "python3");
+const requirementsPath = join(projectRoot, "requirements.txt");
 
 /**
- * Locate the best Python executable to use.
- * Priority:
- * 1. Local venv inside the project
- * 2. System python3
+ * Ensures the Python virtual environment exists and dependencies are installed.
  */
-function getPythonExecutable(): string {
-  const venvPath = join(projectRoot, "venv", "bin", "python3");
-  if (existsSync(venvPath)) {
-    return venvPath;
-  }
-  return "python3";
-}
+function ensurePythonEnvironment() {
+  if (!existsSync(venvPath)) {
+    console.error("Voice MCP: Initializing Python virtual environment. This may take a minute...");
+    
+    // Create the virtual environment
+    const venvResult = spawnSync("python3", ["-m", "venv", "venv"], {
+      cwd: projectRoot,
+      stdio: "inherit"
+    });
 
-const pythonExecutable = getPythonExecutable();
+    if (venvResult.status !== 0) {
+      console.error("Voice MCP: Failed to create Python virtual environment.");
+      process.exit(1);
+    }
+
+    console.error("Voice MCP: Installing ML dependencies (silero-vad, mlx-whisper, kokoro, etc.)...");
+    
+    // Install requirements
+    const pipResult = spawnSync(venvPythonPath, ["-m", "pip", "install", "-r", requirementsPath], {
+      cwd: projectRoot,
+      stdio: "inherit"
+    });
+
+    if (pipResult.status !== 0) {
+      console.error("Voice MCP: Failed to install Python dependencies.");
+      process.exit(1);
+    }
+    
+    console.error("Voice MCP: Environment setup complete!");
+  }
+}
 
 /**
  * Start the Python MCP Server and bridge standard I/O.
  */
 function startBridge() {
-  const pythonProcess = spawn(pythonExecutable, [pythonScriptPath], {
+  ensurePythonEnvironment();
+
+  const pythonProcess = spawn(venvPythonPath, [pythonScriptPath], {
     stdio: ["pipe", "pipe", "inherit"],
     env: {
       ...process.env,
@@ -61,3 +85,4 @@ function startBridge() {
 }
 
 startBridge();
+
