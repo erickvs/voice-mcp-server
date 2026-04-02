@@ -348,7 +348,7 @@ if __name__ == "__main__":
     import os
     
     # Isolate socket to user directory to prevent /tmp hijacking and permission issues
-    app_support_dir = os.path.expanduser("~/Library/Application Support/SpeakMCP")
+    app_support_dir = os.path.expanduser("~/Library/Application Support/VoiceMCP")
     os.makedirs(app_support_dir, exist_ok=True)
     socket_path = os.path.join(app_support_dir, "daemon.sock")
     

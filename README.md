@@ -112,14 +112,14 @@ You can now add the server to your favorite client. Using `npx -y` ensures it wo
 
 **For Gemini CLI:**
 ```bash
-gemini mcp add voice-mcp-server npx -y voice-mcp-server
+gemini mcp add voice-mcp-server --scope user npx -y voice-mcp-server
 ```
 
 **For Cursor / Claude Desktop:**
 Simply use `npx` and `-y` as the command in your configuration.
 
 > [!NOTE]  
-> **First Run Performance:** The very first time you invoke the voice tool, it will take a few minutes to initialize the Python environment and download the heavy ML weights (~4GB). You will see progress updates in your CLI.
+> **First Run Performance:** The very first time you invoke the voice tool, it will take a few minutes to initialize the Python environment and download the heavy ML weights (~4GB). **The tools will not be available until this background setup completes.** You can monitor progress in your terminal logs.
 
 ---
 

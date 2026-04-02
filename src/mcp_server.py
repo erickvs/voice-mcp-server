@@ -41,7 +41,7 @@ SESSION_ID = str(uuid.uuid4())
 
 # We use Unix Domain Sockets to bypass macOS firewall popups
 # Isolate socket to user directory to prevent /tmp hijacking
-app_support_dir = os.path.expanduser("~/Library/Application Support/SpeakMCP")
+app_support_dir = os.path.expanduser("~/Library/Application Support/VoiceMCP")
 os.makedirs(app_support_dir, exist_ok=True)
 SOCKET_PATH = os.path.join(app_support_dir, "daemon.sock")
 
@@ -188,7 +188,7 @@ async def voice_converse(text_to_speak: str, expect_reply: bool = True, ctx: Con
         # Handle the initialization (download) state automatically with native progress
         if response_data and response_data.get("status") == "system_busy" and "initializing" in response_data.get("message", "").lower():
             if ctx:
-                await ctx.info("Speak MCP: Initializing Local AI Models. This may take a few minutes...")
+                await ctx.info("Voice MCP: Initializing Local AI Models. This may take a few minutes...")
             
             while True:
                 try:
@@ -205,7 +205,7 @@ async def voice_converse(text_to_speak: str, expect_reply: bool = True, ctx: Con
                         
                         if d_status == "READY":
                             if ctx:
-                                await ctx.info("Speak MCP: Setup Complete!")
+                                await ctx.info("Voice MCP: Setup Complete!")
                                 
                             # After setup, the models are ready! Now perform the ACTUAL converse call with visualizer.
                             vis_task2 = asyncio.create_task(render_visualizer(ctx)) if ctx else None
