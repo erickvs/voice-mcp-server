@@ -121,15 +121,14 @@ pip install -r requirements.txt
 
 ### 3. Install the NPM Bridge
 
-Install the package globally, or simply rely on `npx` when configuring your client:
+You can run the server directly via `npx` without installing it globally, or install it globally via `npm`:
 
 ```bash
-# Build the TypeScript entry point
-npm install
-npm run build
-
 # Install globally
-npm install -g .
+npm install -g voice-mcp-server
+
+# Or run directly via npx
+npx -y voice-mcp-server
 ```
 
 -----
@@ -142,7 +141,7 @@ You can seamlessly plug Voice MCP Server into any standard MCP-compatible client
 
 Add the server to your global configuration:
 ```bash
-gemini mcp add voice-mcp-server node /absolute/path/to/voice_mcp_server/build/index.js
+gemini mcp add voice-mcp-server npx -y voice-mcp-server
 ```
 
 ### For Cursor
@@ -151,7 +150,7 @@ gemini mcp add voice-mcp-server node /absolute/path/to/voice_mcp_server/build/in
 2.  Click **+ Add New MCP Server**
 3.  **Name:** `Voice`
 4.  **Type:** `command`
-5.  **Command:** `node /absolute/path/to/voice_mcp_server/build/index.js`
+5.  **Command:** `npx -y voice-mcp-server`
 
 ### For Claude Desktop
 
@@ -161,8 +160,8 @@ Add the following to your `claude_desktop_config.json` (usually located at `~/Li
 {
   "mcpServers": {
     "voice-mcp": {
-      "command": "node",
-      "args": ["/absolute/path/to/voice_mcp_server/build/index.js"]
+      "command": "npx",
+      "args": ["-y", "voice-mcp-server"]
     }
   }
 }
