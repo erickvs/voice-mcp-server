@@ -119,7 +119,7 @@ gemini mcp add voice-mcp-server --scope user npx -y voice-mcp-server
 Simply use `npx` and `-y` as the command in your configuration.
 
 > [!NOTE]  
-> **First Run Performance:** The very first time you invoke the voice tool, it will take a few minutes to initialize the Python environment and download the heavy ML weights (~4GB). **The tools will not be available until this background setup completes.** You can monitor progress in your terminal logs.
+> **First Run Performance:** The very first time you invoke the voice tool, it will take a few minutes to initialize the Python environment and download the heavy ML weights (~4GB). **The tools will not be available until this background setup completes.** You can monitor progress in your terminal logs. *Depending on your AI client, you may need to restart the application/CLI for the tools to appear after setup.*
 
 ### 4. Uninstalling
 
