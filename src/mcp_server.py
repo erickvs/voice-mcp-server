@@ -84,7 +84,7 @@ def ensure_daemon_running():
     logging.info("Daemon is down, attempting to boot detached process...")
     # Boot the daemon detached
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    python_exec = os.path.join(project_root, "venv", "bin", "python3")
+    python_exec = os.path.join(app_support_dir, "venv", "bin", "python3")
     daemon_script = os.path.join(project_root, "src", "daemon", "audio_server.py")
     
     subprocess.Popen(
