@@ -38,19 +38,44 @@ function cleanEnv(): NodeJS.ProcessEnv {
 }
 
 /**
+ * Finds a compatible Python executable (Kokoro requires < 3.13).
+ */
+function findCompatiblePython(): string {
+  const candidates = ["python3.12", "python3.11", "python3.10", "python3"];
+  for (const py of candidates) {
+    const result = spawnSync("command", ["-v", py], { shell: true });
+    if (result.status === 0) {
+      const versionResult = spawnSync(py, ["-c", "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"]);
+      if (versionResult.status === 0) {
+        const version = parseFloat(versionResult.stdout.toString().trim());
+        if (version >= 3.10 && version < 3.13) {
+          return py;
+        }
+      }
+    }
+  }
+  
+  // Fallback to python3 if no specific version found (may fail later during pip install if it's 3.13+)
+  return "python3";
+}
+
+/**
  * Ensures the Python virtual environment exists and dependencies are installed.
  */
 function ensurePythonEnvironment() {
   if (!existsSync(setupMarker)) {
     console.error("Voice MCP: Initializing Python virtual environment. This may take a minute...");
     
+    const basePython = findCompatiblePython();
+    console.error(`Voice MCP: Using base Python executable: ${basePython}`);
+
     // Ensure Application Support directory exists
     if (!existsSync(appSupportDir)) {
       mkdirSync(appSupportDir, { recursive: true });
     }
 
     // Create the virtual environment
-    const venvResult = spawnSync("python3", ["-m", "venv", venvPath], {
+    const venvResult = spawnSync(basePython, ["-m", "venv", venvPath], {
       cwd: projectRoot,
       stdio: "ignore",
       env: cleanEnv()
