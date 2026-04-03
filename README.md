@@ -65,7 +65,7 @@ The system is built on a highly modular adapter pattern configured via `hydra` Y
 | | `kokoro_speaker` | High-quality, emotive local ML Text-to-Speech. |
 | | `elevenlabs_speaker` | Premium cloud-based ultra-realistic voices. |
 | **🎙️ Microphones** | `live_mic` | Direct hardware integration via PyAudio. |
-| **🤫 VAD (Activity)** | `silero_vad` | Conversational mode powered by Silero, heavily optimized for 1-second barge-ins. |
+| **🤫 VAD (Activity)** | `silero_vad` | Conversational mode powered by Silero, heavily optimized for 1-second barge-ins. *(Note: **Headphones are strictly required** for this mode to prevent the AI from hearing its own audio output and endlessly interrupting itself).* |
 | | `ptt_vad` | Manual Push-to-Talk / Walkie-Talkie mode. **(Default: Hold 'Shift' to talk)** |
 | **📝 STT (Transcription)**| `mlx_whisper_large_v3`| Blazing fast local transcription leveraging Apple's MLX framework. |
 
