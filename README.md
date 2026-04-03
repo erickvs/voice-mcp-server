@@ -98,7 +98,7 @@ The easiest way to get started is to install the server globally via NPM. This w
 ### 1. Prerequisites
 - **macOS** (Apple Silicon M1/M2/M3/M4 chip required)
 - **Node.js** (v18+)
-- **Python** (3.10+)
+- **Python** (3.10, 3.11, or 3.12) *(Note: Python 3.13 is not yet supported by the Kokoro TTS library. The bridge will automatically search your system for a compatible version if your default is 3.13.)*
 
 You must also have the required system-level audio libraries installed via [Homebrew](https://brew.sh/):
 ```bash
