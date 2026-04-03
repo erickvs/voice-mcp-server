@@ -65,8 +65,8 @@ The system is built on a highly modular adapter pattern configured via `hydra` Y
 | | `kokoro_speaker` | High-quality, emotive local ML Text-to-Speech. |
 | | `elevenlabs_speaker` | Premium cloud-based ultra-realistic voices. |
 | **🎙️ Microphones** | `live_mic` | Direct hardware integration via PyAudio. |
-| **🤫 VAD (Activity)** | `silero_vad` | Conversational mode powered by Silero, heavily optimized for 1-second barge-ins. **(Default)** |
-| | `ptt_vad` | Manual Push-to-Talk mode. *(Note: Requires macOS Input Monitoring permissions for your terminal).* |
+| **🤫 VAD (Activity)** | `silero_vad` | Conversational mode powered by Silero, heavily optimized for 1-second barge-ins. |
+| | `ptt_vad` | Manual Push-to-Talk / Walkie-Talkie mode. **(Default: Hold 'Shift' to talk)** |
 | **📝 STT (Transcription)**| `mlx_whisper_large_v3`| Blazing fast local transcription leveraging Apple's MLX framework. |
 
 -----
@@ -80,7 +80,7 @@ Once connected, the server equips your AI agent with two powerful MCP tools:
 The core communication loop. The AI calls this tool and passes a string of text it wants to say.
 
 1.  The server renders and plays the TTS.
-2.  The server instantly activates the microphone and listens for the user's reply via VAD. *(Note: By default, the server is configured to use Conversational Mode via Silero VAD).*
+2.  The server instantly activates the microphone and listens for the user's reply via VAD. *(Note: By default, the server is configured to use Push-To-Talk. You must press and hold the **Shift** key on your keyboard to speak or interrupt. You can ask the AI to change this!)*
 3.  The server transcribes the audio and returns the text to the AI.
 
 **Interrupt Handling (Barge-in):** If the user interrupts the AI mid-sentence, playback instantly stops. The server captures the interruption, transcribes it, and returns the response alongside a `was_interrupted: true` flag. This allows the AI to organically realize it was cut off and address the interruption naturally.
@@ -99,6 +99,10 @@ The easiest way to get started is to install the server globally via NPM. This w
 - **macOS** (Apple Silicon M1/M2/M3/M4 chip required)
 - **Node.js** (v18+)
 - **Python** (3.10, 3.11, or 3.12) *(Note: Python 3.13 is not yet supported by the Kokoro TTS library. The bridge will automatically search your system for a compatible version if your default is 3.13.)*
+
+> [!IMPORTANT]  
+> **Input Monitoring Permission:** By default, the server uses **Push-to-Talk (Hold 'Shift')** to prevent the AI from hearing its own voice through your laptop speakers and interrupting itself. For the server to detect the Shift key globally, you **must** grant Input Monitoring permissions to your terminal/CLI.
+> Go to: `System Settings` > `Privacy & Security` > `Input Monitoring` > Toggle your terminal (e.g., Cursor, iTerm, Terminal) **ON**.
 
 You must also have the required system-level audio libraries installed via [Homebrew](https://brew.sh/):
 ```bash
