@@ -124,6 +124,11 @@ You can now add the server to your favorite client. Using the globally installed
 gemini mcp add voice-mcp-server --scope user voice-mcp-server
 ```
 
+**For Claude Code:**
+```bash
+claude mcp add voice-mcp-server --scope user voice-mcp-server
+```
+
 **For Cursor / Claude Desktop:**
 Simply use `voice-mcp-server` as the command in your configuration.
 
