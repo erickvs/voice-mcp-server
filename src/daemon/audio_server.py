@@ -125,7 +125,7 @@ def run_audio_daemon():
                     
                     # We got a command, wake up the hardware!
                     mic.start_stream()
-                    engine.start_conversation(cmd.get("text", ""))
+                    engine.start_conversation(cmd.get("text", ""), standby_mode=cmd.get("standby_mode", False))
                     engine.expect_reply = cmd.get("expect_reply", True)
                     
                 except queue.Empty:
@@ -304,6 +304,7 @@ async def converse(request: Request):
     session_id = body.get("session_id")
     text_to_speak = body.get("text_to_speak", "")
     expect_reply = body.get("expect_reply", True)
+    standby_mode = body.get("standby_mode", False)
     
     with mutex_lock:
         if active_session_id is not None and active_session_id != session_id:
@@ -317,7 +318,7 @@ async def converse(request: Request):
 
     try:
         # Feed command to daemon
-        mcp_command_queue.put({"text": text_to_speak, "expect_reply": expect_reply})
+        mcp_command_queue.put({"text": text_to_speak, "expect_reply": expect_reply, "standby_mode": standby_mode})
         
         # Wait for human to interact or natural termination, checking for client disconnects
         while True:
@@ -336,6 +337,8 @@ async def converse(request: Request):
                 last_active_timestamp = time.time()
                 return result
             except queue.Empty:
+                if standby_mode:
+                    last_active_timestamp = time.time()
                 await asyncio.sleep(0.01)
 
     finally:

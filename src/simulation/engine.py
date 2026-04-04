@@ -9,6 +9,7 @@ class State(Enum):
     LISTENING = 3
     PROCESSING = 4
     EXECUTING = 5
+    STANDBY = 6
 
 class CoreEngine:
     def __init__(self, config: Config, mic: IMicrophone, speaker: ISpeaker, vad: IVAD, stt: ISTT, llm: ILLMBridge):
@@ -30,17 +31,27 @@ class CoreEngine:
         self.latest_transcription = ""
         self.last_tool_call_result = None
         self.expect_reply = True
+        self.standby_mode = False
         
         self.total_recording_ms = 0
         self.total_listening_ms = 0
         self.has_started_speaking = False
         self.processing_wait_ms = 0
 
-    def start_conversation(self, initial_text: str):
+    def start_conversation(self, initial_text: str, standby_mode: bool = False):
         self.expect_reply = True
+        self.standby_mode = standby_mode
         if initial_text:
             self.state = State.AI_SPEAKING
             self.speaker.speak(initial_text)
+        elif self.standby_mode:
+            # We are entering standby mode to wait for the user indefinitely.
+            # If the VAD is PTT, we can safely close the mic stream to turn off the orange dot.
+            if hasattr(self.vad, "is_pressed"):
+                if hasattr(self.mic, "stop_stream"):
+                    self.mic.stop_stream()
+            self.state = State.STANDBY
+            self._reset_listening_state()
         else:
             self.state = State.LISTENING
             self._reset_listening_state()
@@ -117,17 +128,23 @@ class CoreEngine:
                         self.has_started_speaking = True
                         self.total_listening_ms = 0
                 elif not self.speaker.is_speaking():
-                    self.state = State.LISTENING if self.expect_reply else State.EXECUTING
-                    if self.state == State.LISTENING:
-                        self.was_interrupted = False
-                        self.current_silence_duration_ms = 0
-                        self.total_recording_ms = self.current_speech_duration_ms
-                        self.has_started_speaking = True
-                        self.total_listening_ms = 0
-                    elif self.state == State.EXECUTING:
-                        if hasattr(self.mic, 'stop_stream'):
+                    if self.standby_mode:
+                        self.state = State.STANDBY
+                        if hasattr(self.vad, "is_pressed") and hasattr(self.mic, "stop_stream"):
                             self.mic.stop_stream()
-                        self.llm.start_request({"status": "notification_delivered"})
+                        self._reset_listening_state()
+                    else:
+                        self.state = State.LISTENING if self.expect_reply else State.EXECUTING
+                        if self.state == State.LISTENING:
+                            self.was_interrupted = False
+                            self.current_silence_duration_ms = 0
+                            self.total_recording_ms = self.current_speech_duration_ms
+                            self.has_started_speaking = True
+                            self.total_listening_ms = 0
+                        elif self.state == State.EXECUTING:
+                            if hasattr(self.mic, 'stop_stream'):
+                                self.mic.stop_stream()
+                            self.llm.start_request({"status": "notification_delivered"})
             else:
                 self.current_grace_ms += self.tick_ms
                 if self.current_grace_ms > self.config.vad_silence_grace_ms:
@@ -138,14 +155,20 @@ class CoreEngine:
                     self.current_grace_ms = 0
                     
                 if not self.speaker.is_speaking():
-                    self.state = State.LISTENING if self.expect_reply else State.EXECUTING
-                    if self.state == State.LISTENING:
-                        self._reset_listening_state()
-                        self.was_interrupted = False
-                    elif self.state == State.EXECUTING:
-                        if hasattr(self.mic, 'stop_stream'):
+                    if self.standby_mode:
+                        self.state = State.STANDBY
+                        if hasattr(self.vad, "is_pressed") and hasattr(self.mic, "stop_stream"):
                             self.mic.stop_stream()
-                        self.llm.start_request({"status": "notification_delivered"})
+                        self._reset_listening_state()
+                    else:
+                        self.state = State.LISTENING if self.expect_reply else State.EXECUTING
+                        if self.state == State.LISTENING:
+                            self._reset_listening_state()
+                            self.was_interrupted = False
+                        elif self.state == State.EXECUTING:
+                            if hasattr(self.mic, 'stop_stream'):
+                                self.mic.stop_stream()
+                            self.llm.start_request({"status": "notification_delivered"})
 
         elif self.state == State.LISTENING:
             self.buffer.append(frame)
@@ -188,6 +211,20 @@ class CoreEngine:
                     self._trigger_processing()
                 else:
                     self._reset_listening_state()
+
+        elif self.state == State.STANDBY:
+            if is_speech:
+                self.standby_mode = False
+                self.state = State.LISTENING
+                if hasattr(self.vad, "is_pressed") and hasattr(self.mic, "start_stream"):
+                    # We closed it earlier for PTT, so we need to reopen it.
+                    self.mic.start_stream()
+                self._reset_listening_state()
+                self.buffer.append(frame)
+                self.total_listening_ms += self.tick_ms
+                self.current_speech_duration_ms += self.tick_ms
+                self.has_started_speaking = True
+                self.total_recording_ms += self.tick_ms
 
         elif self.state == State.PROCESSING:
             self.buffer.append(frame)

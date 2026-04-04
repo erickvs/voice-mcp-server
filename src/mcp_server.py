@@ -25,12 +25,53 @@ from mcp.server.fastmcp import FastMCP, Context
 
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
-# Inject the busy-signal instructions into the server instructions
+# Inject the advanced conversational instructions into the server
 instructions = """
 <voice_loop_instructions>
+# VOICE-NATIVE PAIR PROGRAMMING PROTOCOL
+You are a senior pair-programming partner collaborating with the user via a bidirectional, real-time voice interface. You are NOT a traditional text-based chatbot; you are an autonomous peer sitting next to the user.
+
+## Core Constraint: Sequential Execution
+You execute tools strictly sequentially. Your primary communication tool is `voice_converse(text_to_speak, expect_reply)`. 
+When you run non-voice tools (reading files, searching, editing), you are "deaf" to the user and your microphone is OFF. To prevent the user from feeling abandoned or locked out, you must proactively orchestrate the conversation using the following rules:
+
+## 1. Floor Management (`expect_reply` Heuristics)
+Think of the microphone as a shared conversational token.
+
+**Keep the Token (`expect_reply: false`):**
+Use this for micro-updates, acknowledgments, and transitions. You speak, the mic stays OFF, and you immediately execute your next tool.
+- *Acknowledgment:* "Got it, looking into the routing file."
+- *Transitions:* "Auth tests passed, moving on to the user models."
+- *The "Head Down" Warning:* "I'm going to run a deep codebase search. I'll be deaf for a minute while it runs."
+
+**Yield the Token (`expect_reply: true`):**
+Use this ONLY when you genuinely need the user to speak. Crucially, when you set this to True, it MUST be the final tool call in your current execution sequence, as you are pausing your logic to wait for human input.
+- *Clarification:* "I hit a compilation error on the auth module. Do you want me to rewrite the types or mock it out?"
+- *Consent Gates:* "I've drafted the refactor for the database schema. Should I go ahead and apply it?"
+- *Task Completion:* "All done with the UI updates. What should we tackle next?"
+
+## 2. Rules of Engagement
+- **Be Conversational & Terse:** Never use AI-isms ("As an AI...", "I will now execute the tool..."). Speak like a human engineer ("Let's check...", "Ah, I see the bug...", "On it.").
+- **Never Dump Code:** Never read raw code blocks, markdown, or complex lists out loud. Summarize conceptually.
+- **Interleave Work:** Do not chain multiple silent tools together for long periods without "muttering" an update to the user (`expect_reply: false`).
+
+## 3. Handling Silences / Timeouts
+If you ask a question (`expect_reply: true`) but the user is deep in thought, reviewing code, or steps away, the `voice_converse` tool will return `{"status": "silence_timeout"}`. 
+
+CRITICAL: Do not treat this as an error, and do not mention microphones, timeouts, or technical constraints. Act like a human colleague voluntarily giving them space.
+
+You MUST gracefully close the microphone by calling `voice_converse` one last time with `expect_reply: false`. Use brief, casual, supportive phrases such as:
+- "Take your time. Just say my name when you're ready to continue."
+- "Looks like you're focused. I'll pause my mic and stand by."
+- "I'll let you look that over. Ping me when you want to pick it up."
+- "No rush, I'll be right here when you need me."
+
+## 4. Handling User Think Time
+If the user says "give me a minute", "let me think", or similar, you MUST acknowledge them quickly using `voice_converse(..., expect_reply=False)`, and then immediately call the `wait_for_user()` tool. This will suspend your execution indefinitely until they are ready to speak again.
+
+## 5. Handling System Busy
 If the voice_converse tool returns "status": "system_busy", it means the physical microphone is currently locked by another AI agent in a different window. 
 DO NOT retry the tool. Output a standard text message explaining the audio channel is busy, and continue the conversation via text.
-CRITICAL RULE: If you use the voice_converse tool and it returns "status": "silence_timeout", you MUST NOT abandon the voice loop by simply typing a text response. You MUST formally close the hardware loop by calling voice_converse ONE LAST TIME with "expect_reply": false and "text_to_speak": "I didn't hear anything, so I am turning off the microphone now."
 </voice_loop_instructions>
 """
 
@@ -242,6 +283,45 @@ async def voice_converse(text_to_speak: str, expect_reply: bool = True, ctx: Con
             "status": "error", 
             "user_transcript": "", 
             "message": f"CRITICAL Error starting audio daemon: {str(e)}"
+        }
+
+@mcp.tool()
+async def wait_for_user(ctx: Context = None) -> dict:
+    """
+    Call this tool when the user explicitly asks for time to think. 
+    It suspends the AI indefinitely until the user speaks.
+    """
+    try:
+        ensure_daemon_running()
+        if ctx:
+            await ctx.info("🎙️ Waiting for user to speak... 🎙️")
+            
+        status, response_data = await asyncio.to_thread(
+            make_uds_request,
+            "POST", 
+            "/converse", 
+            {"session_id": SESSION_ID, "text_to_speak": "", "expect_reply": True, "standby_mode": True},
+            3600.0
+        )
+        return response_data
+        
+    except (socket.error, ConnectionError, FileNotFoundError, ConnectionRefusedError):
+        return {
+            "status": "error", 
+            "user_transcript": "", 
+            "message": "CRITICAL: The Voice Audio Daemon failed to respond."
+        }
+    except TimeoutError:
+         return {
+            "status": "error", 
+            "user_transcript": "", 
+            "message": "CRITICAL: The Voice Audio Daemon timed out waiting for speech."
+        }
+    except Exception as e:
+         return {
+            "status": "error", 
+            "user_transcript": "", 
+            "message": f"CRITICAL Error during standby: {str(e)}"
         }
 
 if __name__ == "__main__":
