@@ -129,7 +129,21 @@ gemini mcp add voice-mcp-server --scope user voice-mcp-server
 claude mcp add voice-mcp-server --scope user voice-mcp-server
 ```
 
-**For Cursor / Claude Desktop:**
+**For Claude Desktop:**
+Add the following to your `claude_desktop_config.json` (located at `~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "voice-mcp-server": {
+      "command": "voice-mcp-server",
+      "args": []
+    }
+  }
+}
+```
+
+**For Cursor:**
 Simply use `voice-mcp-server` as the command in your configuration.
 
 > [!NOTE]  
