@@ -2,6 +2,7 @@ from enum import Enum
 from typing import List
 from .models import Config, VirtualAudioFrame
 from .ports import IMicrophone, ISpeaker, IVAD, ISTT, ILLMBridge
+from logger import logger
 
 class State(Enum):
     IDLE = 1
@@ -49,6 +50,7 @@ class CoreEngine:
             # If the VAD is PTT, we can safely close the mic stream to turn off the orange dot.
             if hasattr(self.vad, "is_pressed"):
                 if hasattr(self.mic, "stop_stream"):
+                    logger.debug("Microphone stream stopped")
                     self.mic.stop_stream()
             self.state = State.STANDBY
             self._reset_listening_state()
@@ -122,6 +124,7 @@ class CoreEngine:
                     else:
                         spoken_text = self.speaker.flush()
                         self.was_interrupted = True
+                        logger.info("Barge-in detected! User interrupted the AI.")
                         self.state = State.LISTENING
                         self.current_silence_duration_ms = 0
                         self.total_recording_ms = self.current_speech_duration_ms
@@ -131,6 +134,7 @@ class CoreEngine:
                     if self.standby_mode:
                         self.state = State.STANDBY
                         if hasattr(self.vad, "is_pressed") and hasattr(self.mic, "stop_stream"):
+                            logger.debug("Microphone stream stopped")
                             self.mic.stop_stream()
                         self._reset_listening_state()
                     else:
@@ -143,6 +147,7 @@ class CoreEngine:
                             self.total_listening_ms = 0
                         elif self.state == State.EXECUTING:
                             if hasattr(self.mic, 'stop_stream'):
+                                logger.debug("Microphone stream stopped")
                                 self.mic.stop_stream()
                             self.llm.start_request({"status": "notification_delivered"})
             else:
@@ -158,6 +163,7 @@ class CoreEngine:
                     if self.standby_mode:
                         self.state = State.STANDBY
                         if hasattr(self.vad, "is_pressed") and hasattr(self.mic, "stop_stream"):
+                            logger.debug("Microphone stream stopped")
                             self.mic.stop_stream()
                         self._reset_listening_state()
                     else:
@@ -167,6 +173,7 @@ class CoreEngine:
                             self.was_interrupted = False
                         elif self.state == State.EXECUTING:
                             if hasattr(self.mic, 'stop_stream'):
+                                logger.debug("Microphone stream stopped")
                                 self.mic.stop_stream()
                             self.llm.start_request({"status": "notification_delivered"})
 
@@ -201,6 +208,7 @@ class CoreEngine:
                 return
 
             if not self.has_started_speaking and self.total_listening_ms >= self.config.listening_timeout_ms:
+                logger.info("Silence timeout reached. Prompting LLM.")
                 self.llm.start_request({"status": "silence_timeout", "user_transcript": ""})
                 self.state = State.PROCESSING
                 self.processing_wait_ms = 0
@@ -218,6 +226,7 @@ class CoreEngine:
                 self.state = State.LISTENING
                 if hasattr(self.vad, "is_pressed") and hasattr(self.mic, "start_stream"):
                     # We closed it earlier for PTT, so we need to reopen it.
+                    logger.debug("Microphone stream started")
                     self.mic.start_stream()
                 self._reset_listening_state()
                 self.buffer.append(frame)
@@ -232,9 +241,10 @@ class CoreEngine:
             
             if self.processing_wait_ms >= self.config.llm_timeout_ms:
                 import sys
-                print("LLM Timeout reached. Assuming agent abandoned the voice loop. Tearing down hardware.", file=sys.stderr)
+                logger.error("LLM Timeout reached. Assuming agent abandoned the voice loop. Tearing down hardware.")
                 self.state = State.EXECUTING
                 if hasattr(self.mic, 'stop_stream'):
+                    logger.debug("Microphone stream stopped")
                     self.mic.stop_stream()
                 self.processing_wait_ms = 0
                 self.buffer = []
@@ -246,6 +256,7 @@ class CoreEngine:
                 
                 orphan_speech = any(f.has_speech for f in self.buffer)
                 if orphan_speech:
+                    logger.warning("Orphan speech detected. Interrupted previous context.")
                     self.was_interrupted = True
                     self.state = State.LISTENING
                     self.has_started_speaking = True

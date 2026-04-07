@@ -1,3 +1,4 @@
+from logger import logger
 import pyaudio
 import queue
 from simulation.ports import IMicrophone
@@ -10,6 +11,7 @@ class LiveMicrophone(IMicrophone):
         self.q = queue.Queue(maxsize=100)
         self.p = pyaudio.PyAudio()
         self.stream = None
+        logger.info(f"Initialized LiveMicrophone with rate={rate}, chunk={chunk}")
 
     def start_stream(self):
         if self.stream is not None:
@@ -31,12 +33,21 @@ class LiveMicrophone(IMicrophone):
             stream_callback=self._callback
         )
         self.stream.start_stream()
+        logger.info("LiveMicrophone stream started")
 
     def stop_stream(self):
-        if self.stream is not None:
-            self.stream.stop_stream()
-            self.stream.close()
-            self.stream = None
+        stream = self.stream
+        self.stream = None
+        if stream is not None:
+            try:
+                stream.stop_stream()
+            except OSError as e:
+                logger.debug(f"Ignored PyAudio OSError during stop_stream: {e}")
+            try:
+                stream.close()
+            except Exception:
+                pass
+            logger.info("LiveMicrophone stream stopped")
 
     def _callback(self, in_data, frame_count, time_info, status):
         try:

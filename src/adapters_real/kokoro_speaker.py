@@ -1,3 +1,4 @@
+from logger import logger
 import os
 import time
 import subprocess
@@ -17,7 +18,7 @@ class KokoroSpeaker(ISpeaker):
         self.start_time = 0
         self.temp_file = "/tmp/kokoro_output.wav"
         
-        print(f"[DEBUG SPEAKER] Loading local Kokoro TTS model (Voice: {voice})...")
+        logger.info(f"Loading local Kokoro TTS model (Voice: {voice})...")
         # Load the pipeline. Since you are on M4 Max, we will try to use MPS if available
         if torch.backends.mps.is_available():
             self.device = "mps"
@@ -30,7 +31,7 @@ class KokoroSpeaker(ISpeaker):
         # We use lang_code 'a' for American English
         self.pipeline = KPipeline(lang_code='a', device=self.device)
         self.voice = voice
-        print(f"[DEBUG SPEAKER] Kokoro TTS loaded successfully on {self.device}.")
+        logger.info(f"Kokoro TTS loaded successfully on {self.device}.")
 
     def speak(self, text: str):
         if not text.strip():
@@ -40,7 +41,7 @@ class KokoroSpeaker(ISpeaker):
         self.words = text.split()
         
         try:
-            print(f"[DEBUG SPEAKER] Generating Kokoro audio for: {text[:50]}...")
+            logger.debug(f"Generating Kokoro audio for: {text[:50]}...")
             # Generate the audio locally
             generator = self.pipeline(
                 text, voice=self.voice, # <= change voice here
@@ -54,14 +55,14 @@ class KokoroSpeaker(ISpeaker):
                 audio_segments.append(audio)
             
             if not audio_segments:
-                print("[DEBUG SPEAKER] Kokoro generated empty audio.")
+                logger.warning("Kokoro generated empty audio.")
                 return
                 
             final_audio = torch.cat(audio_segments, dim=0).cpu().numpy()
             
             # Save to temporary file at 24kHz (Kokoro's default sample rate)
             sf.write(self.temp_file, final_audio, 24000)
-            print("[DEBUG SPEAKER] Audio generated, starting playback.")
+            logger.debug("Audio generated, starting playback.")
             
             # Play the generated audio using afplay (macOS native)
             self.start_time = time.time()
@@ -72,7 +73,7 @@ class KokoroSpeaker(ISpeaker):
             )
             
         except Exception as e:
-            print(f"[DEBUG SPEAKER] Kokoro Generation Error: {e}")
+            logger.error(f"Kokoro Generation Error: {e}")
             # Fallback to macOS say
             self.start_time = time.time()
             self.process = subprocess.Popen(

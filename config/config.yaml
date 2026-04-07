@@ -9,7 +9,7 @@ defaults:
   - speaker: kokoro_speaker
   
   # Available VADs: 
-  #   - ptt_vad: Walkie-Talkie mode (Hold 'Shift' to talk. Instant response. Ignores TV/noise).
+  #   - ptt_vad: Walkie-Talkie mode (Hold 'Right Option' to talk. Instant response. Ignores TV/noise).
   #   - silero_vad: Conversational AI mode (Listens automatically. Tuned for 1-second barge-ins).
   - vad: ptt_vad
   

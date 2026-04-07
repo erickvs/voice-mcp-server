@@ -66,7 +66,7 @@ The system is built on a highly modular adapter pattern configured via `hydra` Y
 | | `elevenlabs_speaker` | Premium cloud-based ultra-realistic voices. |
 | **🎙️ Microphones** | `live_mic` | Direct hardware integration via PyAudio. |
 | **🤫 VAD (Activity)** | `silero_vad` | Conversational mode powered by Silero, heavily optimized for 1-second barge-ins. *(Note: **Headphones are strictly required** for this mode to prevent the AI from hearing its own audio output and endlessly interrupting itself).* |
-| | `ptt_vad` | Manual Push-to-Talk / Walkie-Talkie mode. **(Default: Hold 'Shift' to talk)** |
+| | `ptt_vad` | Manual Push-to-Talk / Walkie-Talkie mode. **(Default: Hold 'Right Option' to talk)** |
 | **📝 STT (Transcription)**| `mlx_whisper_large_v3`| Blazing fast local transcription leveraging Apple's MLX framework. |
 
 -----
@@ -192,7 +192,7 @@ If you wish to contribute to the project or run it from source, follow these ste
 
 Once connected, test the server by sending this prompt to your AI:
 
-> *"Let's test your voice capabilities! Please use the `voice_converse` tool to introduce yourself and tell me a story about a brave robot. If I interrupt you while you are speaking, stop the story and acknowledge my interruption in your next response."*
+> *"Let's test your voice capabilities! Please introduce yourself, seamlessly tell me how to use the Right Option key to interact with you, and then start telling me a long story about a brave robot. I will practice using the Right Option key to interrupt you mid-story. When I interrupt, stop the story instantly, acknowledge my interruption naturally, and ask what we should work on instead."*
 
 -----
 

@@ -1,5 +1,5 @@
 _target_: adapters_real.ptt_vad.PushToTalkVAD
-key_name: "shift"
+key_name: "right_option"
 
 # PTT specific tuning (tuned for instant response)
 vad_probability_threshold: 0.50

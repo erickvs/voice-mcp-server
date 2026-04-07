@@ -97,6 +97,7 @@ shellingham==1.5.4
 silero-vad==6.2.1
 six==1.17.0
 smart_open==7.5.1
+sounddevice==0.5.5
 soundfile==0.13.1
 spacy==3.8.14
 spacy-curated-transformers==0.3.1

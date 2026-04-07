@@ -4,7 +4,6 @@ import os
 import time
 import threading
 import queue
-import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import StreamingResponse
@@ -20,6 +19,7 @@ os.environ["TORCH_HOME"] = os.path.join(app_support_dir, "torch")
 # Add src to python path for imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from logger import logger
 from simulation.models import Config
 from simulation.engine import CoreEngine, State
 from adapters_real.queue_llm import QueueLLMBridge
@@ -75,7 +75,7 @@ def pre_download_models():
         daemon_status_message = "Finalizing AI setup..."
         daemon_progress = 90
     except Exception as e:
-        print(f"Model download error: {e}", file=sys.stderr)
+        logger.error(f"Model download error: {e}")
         daemon_status_message = f"Error downloading models: {e}"
 
 def run_audio_daemon():
@@ -92,7 +92,7 @@ def run_audio_daemon():
     
     with initialize(version_base=None, config_path="../../config"):
         cfg = compose(config_name="config")
-        print("Loaded Hydra configuration successfully.")
+        logger.info("Loaded Hydra configuration successfully.")
 
     mic = instantiate(cfg.microphone)
     speaker = instantiate(cfg.speaker)
@@ -114,7 +114,7 @@ def run_audio_daemon():
     daemon_status = "READY"
     daemon_status_message = "Audio Engine is online."
     daemon_progress = 100
-    print("Audio Daemon Started. Waiting for commands.", file=sys.stderr)
+    logger.info("Audio Daemon Started. Waiting for commands.")
     
     try:
         while True:
@@ -125,6 +125,8 @@ def run_audio_daemon():
                     
                     # We got a command, wake up the hardware!
                     mic.start_stream()
+                    if hasattr(vad, "set_active"):
+                        vad.set_active(True)
                     engine.start_conversation(cmd.get("text", ""), standby_mode=cmd.get("standby_mode", False))
                     engine.expect_reply = cmd.get("expect_reply", True)
                     
@@ -135,10 +137,12 @@ def run_audio_daemon():
                 # Once we drop back to EXECUTING, we finished the conversation loop
                 if engine.state == State.EXECUTING:
                     mic.stop_stream()
+                    if hasattr(vad, "set_active"):
+                        vad.set_active(False)
                     last_active_timestamp = time.time()
                     
     except Exception as e:
-        print(f"Daemon exception: {e}", file=sys.stderr)
+        logger.error(f"Daemon exception: {e}")
     finally:
         if mic:
             mic.close()
@@ -150,17 +154,19 @@ async def watchdog():
         await asyncio.sleep(60)
         idle_time = time.time() - last_active_timestamp
         if idle_time > IDLE_TIMEOUT_SECONDS:
-            print(f"Idle timeout reached ({idle_time:.0f}s). Self-destructing to free RAM.", file=sys.stderr)
+            logger.info(f"Idle timeout reached ({idle_time:.0f}s). Self-destructing to free RAM.")
             if mic:
                 mic.close()
             os._exit(0)
 
 def parent_pid_polling():
     """Polls the parent PID. If the parent dies, the daemon instantly self-destructs."""
+    original_ppid = os.getppid()
     while True:
         time.sleep(3.0)
-        if os.getppid() == 1:
-            print("Parent process died. Stopping daemon to prevent Zombie microphone lock.", file=sys.stderr)
+        current_ppid = os.getppid()
+        if current_ppid == 1 or current_ppid != original_ppid:
+            logger.warning("Parent process died. Stopping daemon to prevent Zombie microphone lock.")
             os._exit(0)
 
 @asynccontextmanager
@@ -171,10 +177,6 @@ async def lifespan(app: FastAPI):
     
     # Start the watchdog
     asyncio.create_task(watchdog())
-    
-    # Start the Parent PID Poller
-    polling_thread = threading.Thread(target=parent_pid_polling, daemon=True)
-    polling_thread.start()
     
     yield
     # Shutdown logic
@@ -289,6 +291,36 @@ async def reload_config():
             daemon_status_message = f"Failed to reload: {str(e)}"
             return {"status": "error", "message": daemon_status_message}
 
+@app.post("/abort")
+async def abort_conversation():
+    global engine, mic, speaker, vad, active_session_id
+    logger.info("Received /abort command from client. Stopping audio.")
+    with mutex_lock:
+        if speaker:
+            speaker.flush()
+        if engine:
+            engine.state = State.EXECUTING
+            engine.buffer = []
+            if hasattr(engine.vad, "set_active"):
+                engine.vad.set_active(False)
+        if mic:
+            mic.stop_stream()
+            
+        while not mcp_command_queue.empty():
+            try: mcp_command_queue.get_nowait()
+            except queue.Empty: break
+            
+        mcp_result_queue.put({
+            "status": "ok", 
+            "user_transcript": "", 
+            "was_interrupted": True,
+            "message": "User manually aborted the voice loop using the panic button. You MUST NOT try to speak to the user right now. Wait for them to initiate the next interaction."
+        })
+        
+        active_session_id = None
+        
+    return {"status": "ok"}
+
 @app.post("/converse")
 async def converse(request: Request):
     global active_session_id, last_active_timestamp
@@ -323,12 +355,14 @@ async def converse(request: Request):
         # Wait for human to interact or natural termination, checking for client disconnects
         while True:
             if await request.is_disconnected():
-                print(f"[{session_id}] Client disconnected! Aborting audio loop.", file=sys.stderr)
+                logger.warning(f"[{session_id}] Client disconnected! Aborting audio loop.")
                 # Client hung up (e.g. reload or ctrl+c). We must reset the engine immediately.
                 if speaker:
                     speaker.flush()
                 if engine:
                     engine.state = State.EXECUTING # This will trigger mic.stop_stream() in the loop
+                    if hasattr(vad, "set_active"):
+                        vad.set_active(False)
                 raise HTTPException(status_code=499, detail="Client Disconnected")
             
             try:
