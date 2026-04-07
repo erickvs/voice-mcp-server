@@ -5,6 +5,7 @@
 **Give your AI agents a voice, real ears, and the ability to handle interruptions in real-time.**
 
 [![npm version](https://img.shields.io/npm/v/voice-mcp-server.svg?color=red&style=flat-square&logo=npm)](https://www.npmjs.com/package/voice-mcp-server)
+[![Publish to NPM](https://img.shields.io/github/actions/workflow/status/erickvs/voice-mcp-server/publish.yml?style=flat-square&logo=github)](https://github.com/erickvs/voice-mcp-server/actions)
 [![Platform: macOS Apple Silicon](https://img.shields.io/badge/Platform-macOS%20%7C%20Apple%20Silicon-lightgrey?style=flat-square&logo=apple)](#-target-environment)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&style=flat-square)](https://python.org)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-success?style=flat-square)](https://modelcontextprotocol.io/)
