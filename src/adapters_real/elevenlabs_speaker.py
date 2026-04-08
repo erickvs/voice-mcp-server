@@ -16,7 +16,7 @@ class ElevenLabsSpeaker(ISpeaker):
         self.words = []
         self.process = None
         self.start_time = 0
-        self.voice_id = voice_id
+        self.voice_id = os.getenv("ELEVENLABS_VOICE_ID", voice_id)
         self.api_key = os.getenv("ELEVENLABS_API_KEY")
         self.temp_file = "/tmp/elevenlabs_output.mp3"
 

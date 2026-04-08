@@ -150,7 +150,31 @@ Simply use `voice-mcp-server` as the command in your configuration.
 > [!NOTE]  
 > **First Run Performance:** The very first time you invoke the voice tool, it will take a few minutes to initialize the Python environment and download the heavy ML weights (~4GB). **The tools will not be available until this background setup completes.** You can monitor progress in your terminal logs. *Depending on your AI client, you may need to restart the application/CLI for the tools to appear after setup.*
 
-### 4. Uninstalling
+### 4. Customizing the Voice (ElevenLabs)
+
+If you prefer to use **ElevenLabs** for ultra-realistic cloud TTS instead of the default local Kokoro engine, you can easily configure it using Environment Variables!
+
+When adding the server to your MCP Client (like `claude_desktop_config.json`), simply provide your API key and your preferred Voice ID in the `env` object:
+
+```json
+{
+  "mcpServers": {
+    "voice-mcp-server": {
+      "command": "voice-mcp-server",
+      "args": [],
+      "env": {
+        "ELEVENLABS_API_KEY": "sk_your_api_key_here",
+        "ELEVENLABS_VOICE_ID": "aEO01A4wXwd1O8GPgGlF"
+      }
+    }
+  }
+}
+```
+*(If you are using Gemini CLI or Claude Code, you can simply `export` these variables in your terminal profile like `.zshrc`!)*
+
+Once configured, simply tell your AI: *"Switch your audio engine to use the elevenlabs_speaker adapter."*
+
+### 5. Uninstalling
 
 If you wish to completely remove the server and its downloaded ML models from your system to free up space:
 
