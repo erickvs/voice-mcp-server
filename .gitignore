@@ -13,3 +13,4 @@ src/adapters_real/silero_vad.onnx
 *.mp3
 *.xml
 src/adapters_real/ptt_sidecar
+GEMINI.md
