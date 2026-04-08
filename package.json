@@ -1,6 +1,6 @@
 {
   "name": "voice-mcp-server",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "An MCP server to allow LLMs to speak and listen via bidirectional voice loops",
   "main": "build/index.js",
   "type": "module",
@@ -30,6 +30,10 @@
   ],
   "author": "Erick Vazquez Santillan",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erickvs/voice-mcp-server.git"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.5.0"
   },
