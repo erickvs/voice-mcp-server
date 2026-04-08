@@ -1,6 +1,6 @@
 {
   "name": "voice-mcp-server",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "An MCP server to allow LLMs to speak and listen via bidirectional voice loops",
   "main": "build/index.js",
   "type": "module",
