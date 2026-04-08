@@ -64,12 +64,15 @@ class LiveMicrophone(IMicrophone):
             raw_bytes = self.q.get(timeout=0.1) # Block briefly to act as clock
             # If we didn't get 320 bytes, that's weird but we handle it
             if len(raw_bytes) < self.chunk * 2:
+                logger.warning(f"LiveMicrophone read_frame got only {len(raw_bytes)} bytes instead of {self.chunk * 2}")
                 return VirtualAudioFrame(10, False, False, "", b"")
             return VirtualAudioFrame(10, False, False, "", raw_bytes)
         except queue.Empty:
+            logger.error("LiveMicrophone queue is EMPTY on read! (PyAudio might have crashed or stopped feeding data)")
             # If queue is empty, yield silence frame
             return VirtualAudioFrame(10, False, False, "", b"")
 
     def close(self):
         self.stop_stream()
         self.p.terminate()
+

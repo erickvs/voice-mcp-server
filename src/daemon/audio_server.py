@@ -80,7 +80,7 @@ def pre_download_models():
 
 def run_audio_daemon():
     """Runs the CoreEngine in a persistent background thread."""
-    global engine, mic, speaker, last_active_timestamp, daemon_status, daemon_status_message, daemon_progress
+    global engine, mic, speaker, vad, stt, last_active_timestamp, daemon_status, daemon_status_message, daemon_progress
     
     # Pre-download models so the daemon status reflects exactly what is happening
     pre_download_models()
@@ -118,8 +118,13 @@ def run_audio_daemon():
     
     try:
         while True:
+            current_engine = engine
+            if current_engine is None or mic is None:
+                time.sleep(0.1)
+                continue
+
             # If dormant, check for commands from FastAPI
-            if engine.state == State.EXECUTING:
+            if current_engine.state == State.EXECUTING:
                 try:
                     cmd = mcp_command_queue.get(timeout=0.1) # Blocks briefly
                     
@@ -127,15 +132,15 @@ def run_audio_daemon():
                     mic.start_stream()
                     if hasattr(vad, "set_active"):
                         vad.set_active(True)
-                    engine.start_conversation(cmd.get("text", ""), standby_mode=cmd.get("standby_mode", False))
-                    engine.expect_reply = cmd.get("expect_reply", True)
+                    current_engine.start_conversation(cmd.get("text", ""), standby_mode=cmd.get("standby_mode", False))
+                    current_engine.expect_reply = cmd.get("expect_reply", True)
                     
                 except queue.Empty:
                     pass
             else:
-                engine.tick()
+                current_engine.tick()
                 # Once we drop back to EXECUTING, we finished the conversation loop
-                if engine.state == State.EXECUTING:
+                if current_engine.state == State.EXECUTING:
                     mic.stop_stream()
                     if hasattr(vad, "set_active"):
                         vad.set_active(False)
@@ -231,18 +236,16 @@ async def reload_config():
         # 1. Stop the current engine
         if engine:
             engine.state = State.EXECUTING
-        if mic: 
-            mic.close()
+        # Do NOT close the mic during hot-swap to prevent macOS CoreAudio permission drop!
+        # if mic: 
+        #     mic.close()
             
         # 1b. CRITICAL: Explicitly obliterate old models from VRAM to prevent Out-Of-Memory (OOM) crashes on hot-swaps
         import gc
-        try:
-            del speaker
-            del vad
-            del stt
-            del engine
-        except NameError:
-            pass
+        speaker = None
+        vad = None
+        stt = None
+        engine = None
             
         gc.collect()
         
@@ -265,7 +268,12 @@ async def reload_config():
                 cfg = compose(config_name="config")
                 
             # 3. Instantiate the new models on the fly
-            mic = instantiate(cfg.microphone)
+            if mic is None:
+                logger.info("Microphone was None during hot-swap, instantiating a new one.")
+                mic = instantiate(cfg.microphone)
+            else:
+                logger.info("Preserving existing Microphone instance during hot-swap.")
+                
             speaker = instantiate(cfg.speaker)
             vad = instantiate(cfg.vad)
             stt = instantiate(cfg.stt)
